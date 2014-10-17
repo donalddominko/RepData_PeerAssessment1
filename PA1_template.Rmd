@@ -11,12 +11,15 @@ output:
 ```{R}
         unzip("activity.zip")
         fdRead = read.csv("activity.csv", sep = ",", header=T)
+        
+        # Calculating sum
+        agStepsSum = aggregate(dfRead$steps, list(date=dfRead$date), sum)
 ```
 
 ## What is mean total number of steps taken per day?
 ```{R}
-        # Calculating sum
-        agStepsSum = aggregate(dfRead$steps, list(date=dfRead$date), sum)
+        # Histogram of steps
+        hist(agStepsSum$x, col = "green", breaks=10)
         
         # Calculating mean
         #agStepsMean = aggregate(agStepsSum$x, list(date=agStepsSum$date), mean)
