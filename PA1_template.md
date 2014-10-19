@@ -5,6 +5,9 @@ output:
     keep_md: true
 ---
 
+# Reproducible Research: Peer Assessment 1
+
+
 ## Loading and preprocessing the data
 
 
@@ -13,21 +16,22 @@ output:
         dfRead = read.csv("activity.csv", sep = ",", header=T)
         
         # Calculating sum
-        agStepsSum = aggregate(dfRead$steps, list(date=dfRead$date), sum)
+        agStepsSum = aggregate(steps ~ date, data=dfRead, sum)
+        names(agStepsSum) = c("date","steps")        
 ```
 
 ## What is mean total number of steps taken per day?
 
 ```r
         # Histogram of steps
-        hist(agStepsSum$x, col = "green", breaks=10)
+        hist(agStepsSum$steps, col = "green", breaks=10)
 ```
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
 
 ```r
         # Calculating mean
-        mean(agStepsSum$x, na.rm=T)
+        mean(agStepsSum$steps, na.rm=T)
 ```
 
 ```
@@ -36,7 +40,7 @@ output:
 
 ```r
         # Calculating median
-        inMedian = median(agStepsSum$x, na.rm=T)
+        inMedian = median(agStepsSum$steps, na.rm=T)
         inMedian
 ```
 
@@ -49,34 +53,28 @@ output:
 ## What is the average daily activity pattern?
 
 ```r
-        agStepsMeanInt = aggregate(dfRead$steps, list(dfRead$interval), mean, na.rm=T)
-        names(agStepsMeanInt) = c("interval","daymean")
+        agStepsMeanInt = aggregate(steps ~ interval, data=dfRead, mean, na.rm=T)
+        names(agStepsMeanInt) = c("interval","steps")
 
-        #dfMaxDayMean = agStepsMeanInt[max(agStepsMeanInt$daymean), ] # One BUG down :)
-        dfMaxDayMean = agStepsMeanInt[which.max(agStepsMeanInt$daymean), ]
+        dfMaxDayMean = agStepsMeanInt[which.max(agStepsMeanInt$steps), ]
 
         # Time to plot
         library(ggplot2)
-        ggplot(agStepsMeanInt, aes(x=interval, y=daymean)) + 
+        ggplot(agStepsMeanInt, aes(x=interval, y=steps)) + 
                 geom_line() + 
                 xlab("Interval (5 minute)") + 
-                ylab("Average steps per day")
+                ylab("Average steps across all days")
 ```
 
 ![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
-
-```r
-        #agStepsSumInt = aggregate(dfRead$steps, list(dfRead$interval), sum, na.rm=T)
-        #colnames(agStepsSumInt) = c("inteval","sumsteps")
-```
-The interval with maximum number of average steps is interval number 835 and it contains on average maximum number of 206.1698113 steps.
+The interval with maximum number of average steps is interval number 835 and it contains on average maximum number of  steps.
 
 ## Imputing missing values
 
 ```r
         inNas = sum(is.na(dfRead))
 ```
-The number of missing values is 2304.
+The number of missing values is **2304**.
 
 For imputing missing values I'll use median of an entire dataset
 
@@ -88,17 +86,18 @@ For imputing missing values I'll use median of an entire dataset
         dfReadImpute[is.na(dfReadImpute$steps),]$steps = inMedian
 
         # We do the computation again
-        agStepsSumImpute = aggregate(dfReadImpute$steps, list(date=dfRead$date), sum)
+        agStepsSumImpute = aggregate(steps ~ date, data=dfReadImpute, sum)
+        names(agStepsSumImpute) = c("date","steps")
 
         # Creating histogram
-        hist(agStepsSumImpute$x, col = "green", breaks=20)
+        hist(dfReadImpute$steps, col = "green", breaks=20)
 ```
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
 
 ```r
         # Printing out mean values before and after
-        mean(agStepsSum$x, na.rm=T)
+        mean(agStepsSum$steps, na.rm=T)
 ```
 
 ```
@@ -106,7 +105,7 @@ For imputing missing values I'll use median of an entire dataset
 ```
 
 ```r
-        mean(agStepsSumImpute$x)
+        mean(agStepsSumImpute$steps)
 ```
 
 ```
@@ -114,7 +113,7 @@ For imputing missing values I'll use median of an entire dataset
 ```
 
 ```r
-        median(agStepsSum$x, na.rm=T)
+        median(agStepsSum$steps, na.rm=T)
 ```
 
 ```
@@ -122,14 +121,38 @@ For imputing missing values I'll use median of an entire dataset
 ```
 
 ```r
-        median(agStepsSumImpute$x)
+        median(agStepsSumImpute$steps)
 ```
 
 ```
 ## [1] 11458
 ```
-Imputing median values into dataset had huge effect on the mean value and some effect 
+Imputing median values into dataset had **huge** effect on the mean value and some effect 
 (about +10%) on median value.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+```r
+        # Let's make a function (we could cram into sapply) that returns 'weekday' or'weekend'
+        toWeekday = function(day){
+                ifelse(weekdays(day) 
+                       %in% c("Saturday", "Sunday"),"weekend", "weekday")
+        }        
+
+        # First of we must cast into Date because we actually have a factor for '$date'
+        # We create wday column with factor values returned from sapply (calling 'toWeekday')
+        dfReadImpute$wday = as.factor(sapply(as.Date(dfReadImpute$date), toWeekday))
+
+        # Last aggreage for plotting
+        agStepsMeanImpute = aggregate(steps ~ interval + wday, data=dfReadImpute, mean)
+
+        # Finally time to plot
+        ggplot(agStepsMeanImpute, aes(x=interval, y=steps, colour = wday)) + 
+                geom_line() +
+                #geom_point() +
+                #facet_grid(. ~ wday ) +
+                xlab("Interval (5 minutes)") + 
+                ylab("Average steps across all weekday or weekend days")
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
