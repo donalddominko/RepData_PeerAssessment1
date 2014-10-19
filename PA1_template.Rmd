@@ -100,9 +100,10 @@ Imputing median values into dataset had **huge** effect on the mean value and so
 
         # Finally time to plot
         ggplot(agStepsMeanImpute, aes(x=interval, y=steps, colour = wday)) + 
-                geom_line() +
+                geom_line() +                
                 xlab("Interval (5 minutes)") + 
                 ylab("Average steps across all weekday or weekend days")
 ```
-There are differences in activity patterns between weekdays and weekend which is clearly
+  
+  There are differences in activity patterns between weekdays and weekend which is clearly
 visible from the plot above.
